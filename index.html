@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0f15">
+<title>OyunBazar</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html{color-scheme:dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: sticky bar (menu / name / profile), two staggered columns of listing tiles with price on the tile, bottom dock with a raised Ana Menü button, left drawer for categories, bottom sheets for details, cart, profile and admin. Dark-first. */
+:root{
+  --bg:#0d0f15; --surface:#161a23; --surface-2:#1e2430; --line:#2a3140;
+  --fg:#eaeef6; --muted:#8f98ab; --accent:#ff8a1f; --on-accent:#1a1005;
+  --good:#3ddc84; --bad:#ff6b6b; --tg:#2b9fd9; --wa:#1f9d55;
+  --ph-a:#2a3348; --ph-b:#141823; --media-bg:#05070b;
+  --scrim-text:#ffffff; --price-on-media:#ffa75a;
+  --font-display:'Chakra Petch','Segoe UI',system-ui,sans-serif;
+  --font-body:'Outfit','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eceff4; --surface:#ffffff; --surface-2:#f2f4f8; --line:#d3d9e4;
+    --fg:#151a24; --muted:#5b647a; --accent:#c95700; --on-accent:#ffffff;
+    --good:#188a4a; --bad:#c62f2f; --ph-a:#55627f; --ph-b:#36405a;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#eceff4; --surface:#ffffff; --surface-2:#f2f4f8; --line:#d3d9e4;
+  --fg:#151a24; --muted:#5b647a; --accent:#c95700; --on-accent:#ffffff;
+  --good:#188a4a; --bad:#c62f2f; --ph-a:#55627f; --ph-b:#36405a;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg); font:15px/1.45 var(--font-body);
+  padding-block:0 120px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ico{display:inline-grid;place-items:center;width:24px;height:24px}
+.ico svg{width:100%;height:100%}
+.muted{color:var(--muted)}
+main{max-width:760px;margin:0 auto}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);
+  display:grid;grid-template-columns:48px minmax(0,1fr) 56px;align-items:start;gap:8px;padding-block:10px 8px;max-width:760px;margin:0 auto}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0}
+.brand{text-align:center;display:grid;gap:2px;justify-items:center;padding-top:4px}
+.brand b{font:700 21px/1 var(--font-display);letter-spacing:.08em;text-transform:uppercase}
+.brand b i{font-style:normal;color:var(--accent)}
+.livepill{display:inline-flex;align-items:center;gap:6px;font:600 10px var(--font-body);letter-spacing:.14em;color:var(--muted)}
+.livepill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.livepill.on{color:var(--good)}
+.livepill.on::before{background:var(--good);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.profile-btn{background:none;border:0;padding:0;display:grid;justify-items:center;gap:3px}
+.avatar{width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);display:grid;place-items:center;font:700 16px var(--font-display);color:var(--fg)}
+.avatar .ico{width:20px;height:20px}
+.profile-btn small{font-size:11px;color:var(--muted)}
+
+.searchbar{padding-bottom:10px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 8px 5px 12px;font-size:13px}
+.chip button{background:none;border:0;padding:0;display:grid;place-items:center;color:var(--muted)}
+.chip .ico{width:16px;height:16px}
+
+/* grid */
+.grid{display:flex;gap:12px;align-items:flex-start}
+.col{flex:1 1 0;min-width:0;display:grid;gap:12px}
+.card{position:relative;display:block;width:100%;padding:0;text-align:left;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.thumb{position:relative;width:100%;max-width:100%;background:linear-gradient(160deg,var(--ph-a),var(--ph-b))}
+.thumb img,.thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.thumb .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--scrim-text);opacity:.35}
+.thumb .ph .ico{width:44px;height:44px}
+.thumb .vid{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(5,7,12,.6);color:var(--scrim-text);display:grid;place-items:center}
+.thumb .vid .ico{width:14px;height:14px}
+.info{position:absolute;left:0;right:0;bottom:0;padding:30px 10px 9px;background:linear-gradient(to top,rgba(5,7,12,.9),rgba(5,7,12,0));color:var(--scrim-text)}
+.info .t{font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.price{font:700 19px/1.2 var(--font-display);color:var(--price-on-media);font-variant-numeric:tabular-nums}
+.sold{position:absolute;top:8px;left:8px;background:var(--bad);color:#fff;font:600 11px var(--font-body);letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px}
+.empty{width:100%;padding:56px 12px;text-align:center;display:grid;gap:10px;justify-items:center}
+.empty .ico{width:54px;height:54px;color:var(--muted)}
+.empty h2{margin:0;font:600 20px var(--font-display)}
+.empty p{margin:0;max-width:36ch;color:var(--muted)}
+
+/* dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(3,1fr);align-items:end;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.dock button{background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font:500 12px var(--font-body);padding:4px;position:relative;min-height:48px}
+.dock button[aria-current="true"]{color:var(--fg)}
+.dock .home .disc{width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;margin-top:-30px;border:4px solid var(--bg)}
+.dock .home{color:var(--fg);min-height:44px}
+.badge{position:absolute;top:0;right:calc(50% - 22px);min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--on-accent);font:700 11px/18px var(--font-body);text-align:center;padding:0 5px}
+
+/* overlay, drawer, sheet */
+.overlay{position:fixed;inset:0;background:rgba(5,7,12,.62);z-index:40}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(84%,320px);z-index:50;background:var(--surface);border-right:1px solid var(--line);
+  padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(18px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:4px;overflow:auto;animation:slidein .22s ease-out}
+@keyframes slidein{from{transform:translateX(-100%)}}
+.drawer h3{margin:0 0 10px;font:600 12px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.navrow{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:12px 10px;font-size:16px}
+.navrow[aria-current="true"]{background:var(--surface-2);color:var(--accent);font-weight:600}
+.navrow small{color:var(--muted);font-variant-numeric:tabular-nums}
+.drawer hr{border:0;border-top:1px solid var(--line);margin:10px 0;width:100%}
+.sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,560px);max-height:90%;overflow:auto;z-index:50;background:var(--surface);
+  border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;animation:slideup .22s ease-out;outline:0}
+@keyframes slideup{from{transform:translate(-50%,28px);opacity:0}}
+.sheet-head{position:sticky;top:0;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px 10px;z-index:2}
+.sheet-head h2{margin:0;font:700 20px/1.2 var(--font-display);overflow-wrap:anywhere}
+.sheet-body{padding:4px 16px calc(22px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+@media (prefers-reduced-motion:reduce){.drawer,.sheet,.livepill.on::before{animation:none}}
+
+.gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;border-radius:14px}
+.slide{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:4/3;background:var(--media-bg);border-radius:14px;overflow:hidden;position:relative}
+.slide img,.slide video{width:100%;height:100%;object-fit:contain;display:block}
+.slide.ph{background:linear-gradient(160deg,var(--ph-a),var(--ph-b));display:grid;place-items:center;color:var(--scrim-text)}
+.slide.ph .ico{width:56px;height:56px;opacity:.4}
+.d-price{font:700 28px/1 var(--font-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.desc{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 140px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:12px;border:1px solid transparent;font:600 15px var(--font-body);text-decoration:none}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.ghost{background:var(--surface-2);color:var(--fg);border-color:var(--line)}
+.btn.tg{background:var(--tg);color:#fff}
+.btn.wa{background:var(--wa);color:#fff}
+.btn.danger{background:var(--bad);color:#fff}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn .ico{width:20px;height:20px}
+.order{display:grid;gap:10px;padding:14px;border:1px dashed var(--line);border-radius:14px}
+.order p{margin:0;font-size:13px;color:var(--muted)}
+.order .sel{user-select:all;color:var(--fg)}
+
+.field{display:grid;gap:6px}
+.field>span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input[type=text],input[type=tel],input[type=number],input[type=password],input[type=search],select,textarea{
+  width:100%;min-height:46px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);font-size:16px}
+textarea{padding:10px 12px;resize:vertical}
+.note{font-size:13px;color:var(--muted);margin:0}
+.mediabox{display:flex;flex-wrap:wrap;gap:8px}
+.mchip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:4px 6px 4px 4px;font-size:13px;max-width:100%}
+.mchip .mt{width:36px;height:36px;border-radius:6px;overflow:hidden;background:var(--media-bg);display:grid;place-items:center;flex:none;color:var(--scrim-text)}
+.mchip .mt img,.mchip .mt video{width:100%;height:100%;object-fit:cover}
+.mchip .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.mchip button{background:none;border:0;padding:0;color:var(--muted);display:grid;place-items:center}
+.mchip .ico{width:18px;height:18px}
+.checkrow{display:flex;align-items:center;gap:10px}
+.checkrow input{width:20px;height:20px;accent-color:var(--accent)}
+.alist{display:grid;gap:8px}
+.arow{display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface-2)}
+.arow .mt{width:48px;height:48px;border-radius:8px;overflow:hidden;background:linear-gradient(160deg,var(--ph-a),var(--ph-b));display:grid;place-items:center;color:var(--scrim-text)}
+.arow .mt img,.arow .mt video{width:100%;height:100%;object-fit:cover}
+.arow .meta{min-width:0}
+.arow .meta b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arow .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.arow .acts .btn{min-height:38px;padding:0 12px;font-size:14px;flex:1 1 90px}
+.crow{display:grid;grid-template-columns:56px minmax(0,1fr) 40px;gap:10px;align-items:center}
+.crow .mt{width:56px;height:56px;border-radius:10px;overflow:hidden;background:linear-gradient(160deg,var(--ph-a),var(--ph-b))}
+.crow .mt img,.crow .mt video{width:100%;height:100%;object-fit:cover}
+.crow b{display:block;overflow-wrap:anywhere}
+.total{display:flex;justify-content:space-between;align-items:baseline;font-weight:600}
+.total span:last-child{font:700 24px var(--font-display);color:var(--accent)}
+details summary{cursor:pointer;color:var(--muted);padding:6px 0}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:70;max-width:min(92%,420px);
+  background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;text-align:center}
+.toast.bad{background:var(--bad);color:#fff}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="icon-btn" id="btn-menu" aria-label="Kateqoriyalar"></button>
+  <div class="brand"><b>Oyun<i>Bazar</i></b><span class="livepill" id="live">CANLI</span></div>
+  <button class="profile-btn" id="btn-profile" aria-label="Profil"><span class="avatar" id="avatar"></span><small>Profil</small></button>
+</header>
+
+<main>
+  <div class="searchbar" id="searchbar" hidden><input type="search" id="search" placeholder="Elan axtar…" aria-label="Elan axtar" autocomplete="off"></div>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<nav class="dock" aria-label="Əsas naviqasiya">
+  <button id="d-search"><span class="ico" data-i="search"></span>Axtar</button>
+  <button id="d-home" class="home" aria-current="true"><span class="disc"><span class="ico" data-i="home"></span></span>Ana Menü</button>
+  <button id="d-cart"><span class="ico" data-i="cart"></span>Səbət<span class="badge" id="badge" hidden>0</span></button>
+</nav>
+
+<div class="overlay" id="overlay" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Kateqoriyalar"></aside>
+<section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" tabindex="-1"></section>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+/* ====== BURANI DOLDURUN (SETUP təlimatına bax) ====== */
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDx9M1EfL3QLinjyYz60UVIwHohzEZoJYA',
+  authDomain: 'marketplace-96be6.firebaseapp.com',
+  projectId: 'marketplace-96be6',
+  appId: '1:265030846677:web:2e0d234d4bb00ec2127a5c'
+};
+const CLOUD_NAME = 'gs5cvpwf';
+const CLOUD_PRESET = 'OnlineMarket';
+/* ==================================================== */
+
+const TG = 'IvarSmall', WA = '994777643240', WA_SHOW = '+994 777643240';
+const CATS = ['PUBG hesab elanı', 'UC satışı', 'Free Fire', 'CS2 / Steam', 'Digər'];
+const RATIOS = ['1/1', '4/5', '3/4', '5/4', '1/1.15', '4/3.4'];
+const MAX_MEDIA = 8, MAX_VIDEO = 100 * 1024 * 1024;
+const PATHS = {
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+  home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  cart: '<path d="M3 4h2l2.4 11h10.2L20 7H6.5"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  play: '<path d="M8 5l11 7-11 7z" fill="currentColor"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  gamepad: '<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4"/><circle cx="16" cy="12" r=".8" fill="currentColor"/><circle cx="18" cy="14" r=".8" fill="currentColor"/>',
+  send: '<path d="M21 4L3 11l6 2 2 6 3-4 4 3z"/>',
+  chat: '<path d="M20 12a8 8 0 01-11.6 7.1L4 20l1-4.2A8 8 0 1120 12z"/>'
+};
+const icon = (n) => { const s = document.createElement('span'); s.className = 'ico'; s.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (PATHS[n] || '') + '</svg>'; return s; };
+const $ = (s) => document.querySelector(s);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in props || {}) {
+    const v = props[k];
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k === 'on') { for (const ev in v) e.addEventListener(ev, v[ev]); }
+    else if (v === true) e.setAttribute(k, '');
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) { if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const fmt = (n) => (Math.round(Number(n || 0) * 100) / 100).toString().replace('.', ',') + ' ₼';
+const hash = (s) => { let x = 0; for (const c of String(s)) x = (x * 31 + c.charCodeAt(0)) >>> 0; return x; };
+
+let db = null, auth = null, adminUser = null;
+let status = 'loading', live = false, firstSnap = true;
+const loadedAt = Date.now();
+let listings = [];
+let filterCat = null, query_ = '';
+let cart = lsGet('ob_cart', []);
+let profile = lsGet('ob_profile', { name: '', phone: '' });
+let current = null, toastTimer = null;
+const isAdmin = () => !!adminUser;
+
+const byId = (id) => listings.find((l) => l.id === id);
+const overlay = $('#overlay'), sheet = $('#sheet'), drawer = $('#drawer');
+
+function toast(msg, kind) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast' + (kind === 'bad' ? ' bad' : ''); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3600);
+}
+const lock = (on) => { document.documentElement.style.overflow = on ? 'hidden' : ''; };
+function closeAll() { overlay.hidden = true; sheet.hidden = true; drawer.hidden = true; lock(false); current = null; }
+function openSheet(title, body) {
+  sheet.replaceChildren(
+    h('div', { class: 'sheet-head' }, h('h2', { text: title }), h('button', { class: 'icon-btn', 'aria-label': 'Bağla', on: { click: closeAll } }, icon('close'))),
+    h('div', { class: 'sheet-body' }, body)
+  );
+  overlay.hidden = false; sheet.hidden = false; drawer.hidden = true; lock(true); sheet.scrollTop = 0; sheet.focus({ preventScroll: true });
+}
+overlay.addEventListener('click', closeAll);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
+
+function mediaEl(m, thumb, alt) {
+  if (m.type === 'video') {
+    const v = h('video', { src: thumb ? m.url + '#t=0.1' : m.url, playsinline: true, preload: 'metadata', controls: !thumb });
+    v.muted = !!thumb; return v;
+  }
+  return h('img', { src: m.url, alt: alt || '', loading: 'lazy' });
+}
+
+function saveProfile() { lsSet('ob_profile', profile); }
+function saveCart() { lsSet('ob_cart', cart); }
+function toggleCart(id) {
+  cart = cart.includes(id) ? cart.filter((x) => x !== id) : cart.concat(id);
+  saveCart(); renderDock();
+}
+
+function orderMessage(items) {
+  const lines = ['Salam! Sifariş vermək istəyirəm:'];
+  items.forEach((l, i) => lines.push((i + 1) + '. ' + l.title + ' — ' + fmt(l.price)));
+  if (items.length > 1) lines.push('Cəmi: ' + fmt(items.reduce((s, l) => s + Number(l.price || 0), 0)));
+  if (profile.name) lines.push('Ad: ' + profile.name);
+  if (profile.phone) lines.push('Nömrə: ' + profile.phone);
+  return lines.join('\n');
+}
+function copyText(msg, okMsg) {
+  try { navigator.clipboard.writeText(msg).then(() => toast(okMsg)).catch(() => {}); } catch (e) {}
+}
+function orderChoices(msg) {
+  return h('div', { class: 'order' },
+    h('div', { class: 'row' },
+      h('a', { class: 'btn tg', href: 'https://t.me/' + TG, target: '_blank', rel: 'noopener', on: { click: () => copyText(msg, 'Sifariş mətni kopyalandı. Telegramda yapışdırın.') } }, icon('send'), 'Telegram'),
+      h('a', { class: 'btn wa', href: 'https://wa.me/' + WA + '?text=' + encodeURIComponent(msg), target: '_blank', rel: 'noopener' }, icon('chat'), 'WhatsApp')
+    ),
+    h('p', {}, 'Telegram: ', h('span', { class: 'sel', text: '@' + TG }), ' · WhatsApp: ', h('span', { class: 'sel', text: WA_SHOW }))
+  );
+}
+
+function visible() {
+  const q = query_.trim().toLowerCase();
+  return listings.filter((l) => (!filterCat || l.cat === filterCat) && (!q || ((l.title || '') + ' ' + (l.desc || '')).toLowerCase().includes(q)));
+}
+function card(l) {
+  const m = (l.media || [])[0];
+  const thumb = h('div', { class: 'thumb', style: 'aspect-ratio:' + RATIOS[hash(l.id) % RATIOS.length] });
+  if (m) { thumb.append(mediaEl(m, true, l.title)); if (m.type === 'video') thumb.append(h('span', { class: 'vid' }, icon('play'))); }
+  else thumb.append(h('div', { class: 'ph' }, icon('gamepad')));
+  if (l.sold) thumb.append(h('span', { class: 'sold', text: 'Satılıb' }));
+  thumb.append(h('div', { class: 'info' }, h('div', { class: 't', text: l.title }), h('div', { class: 'price', text: fmt(l.price) })));
+  return h('button', { class: 'card', 'aria-label': l.title + ', ' + fmt(l.price), on: { click: () => showDetail(l.id) } }, thumb);
+}
+function renderGrid() {
+  const root = $('#grid'); root.replaceChildren();
+  const list = visible();
+  if (!list.length) {
+    let e;
+    if (status === 'loading') e = ['gamepad', 'Elanlar yüklənir', ''];
+    else if (status === 'nodb') e = ['lock', 'Elanlar yüklənmədi', 'İnternet bağlantısını yoxlayın və tətbiqi yenidən açın.'];
+    else if (status === 'noconfig') e = ['lock', 'Firebase qurulmayıb', 'index.html faylında Firebase məlumatlarını doldurun.'];
+    else if (listings.length) e = ['search', 'Tapılmadı', 'Bu seçimə uyğun elan yoxdur.'];
+    else e = ['gamepad', 'Hələ elan yoxdur', 'Yeni elanlar burada dərhal görünəcək.'];
+    root.append(h('div', { class: 'empty' }, icon(e[0]), h('h2', { text: e[1] }), e[2] ? h('p', { text: e[2] }) : null));
+    return;
+  }
+  const cols = [h('div', { class: 'col' }), h('div', { class: 'col' })];
+  list.forEach((l, i) => cols[i % 2].append(card(l)));
+  root.append(...cols);
+}
+function renderChips() {
+  const c = $('#chips'); c.replaceChildren();
+  if (filterCat) c.append(h('span', { class: 'chip' }, filterCat, h('button', { 'aria-label': 'Filtri sil', on: { click: () => { filterCat = null; renderAll(); } } }, icon('close'))));
+}
+function renderTop() {
+  const a = $('#avatar'); a.replaceChildren();
+  const n = (profile.name || '').trim();
+  if (n) a.textContent = n[0].toUpperCase(); else a.append(icon('user'));
+  $('#live').className = 'livepill' + (live ? ' on' : '');
+}
+function renderDock() {
+  const n = status === 'ready' ? cart.filter(byId).length : cart.length;
+  const b = $('#badge'); b.textContent = n; b.hidden = !n;
+  $('#d-home').setAttribute('aria-current', String(!filterCat && !query_));
+}
+function renderAll() { renderTop(); renderChips(); renderGrid(); renderDock(); }
+
+function showDrawer() {
+  const count = (c) => listings.filter((l) => l.cat === c).length;
+  const row = (label, cat, n) => h('button', { class: 'navrow', 'aria-current': String(filterCat === cat), on: { click: () => { filterCat = cat; closeAll(); renderAll(); window.scrollTo(0, 0); } } }, h('span', { text: label }), h('small', { text: n }));
+  drawer.replaceChildren(
+    h('h3', { text: 'Kateqoriyalar' }),
+    row('Hamısı', null, listings.length),
+    ...CATS.map((c) => row(c, c, count(c))),
+    h('hr'),
+    h('button', { class: 'navrow', on: { click: () => { closeAll(); showAdmin(); } } }, h('span', { text: 'Admin paneli' }), icon('lock'))
+  );
+  overlay.hidden = false; drawer.hidden = false; sheet.hidden = true; lock(true);
+}
+
+function showDetail(id) {
+  const l = byId(id); if (!l) return;
+  const media = l.media || [];
+  const gal = h('div', { class: 'gallery' }, media.length ? media.map((m) => h('div', { class: 'slide' }, mediaEl(m, false, l.title))) : h('div', { class: 'slide ph' }, icon('gamepad')));
+  const cbtn = h('button', { class: 'btn ghost', on: { click: () => { toggleCart(l.id); setLabel(); } } });
+  const setLabel = () => { cbtn.replaceChildren(icon('cart'), cart.includes(l.id) ? 'Səbətdən çıxar' : 'Səbətə at'); };
+  setLabel();
+  const panel = orderChoices(orderMessage([l])); panel.hidden = true;
+  const obtn = h('button', { class: 'btn primary', disabled: !!l.sold, on: { click: () => { panel.hidden = !panel.hidden; } } }, l.sold ? 'Satılıb' : 'Sifariş et');
+  openSheet(l.title, [
+    gal,
+    h('div', { class: 'd-price', text: fmt(l.price) }),
+    h('div', {}, h('span', { class: 'tag', text: l.cat || 'Digər' })),
+    l.desc ? h('p', { class: 'desc', text: l.desc }) : null,
+    h('div', { class: 'row' }, cbtn, obtn),
+    panel
+  ]);
+  current = { kind: 'detail', id };
+}
+
+function showCart() {
+  const items = cart.map(byId).filter(Boolean);
+  const body = [];
+  if (!items.length) body.push(h('div', { class: 'empty' }, icon('cart'), h('h2', { text: 'Səbət boşdur' }), h('p', { text: 'Elanın içində "Səbətə at" düyməsinə basın.' })));
+  else {
+    items.forEach((l) => {
+      const m = (l.media || [])[0];
+      body.push(h('div', { class: 'crow' },
+        h('div', { class: 'mt' }, m ? mediaEl(m, true, l.title) : null),
+        h('div', { style: 'min-width:0' }, h('b', { text: l.title }), h('span', { class: 'muted', text: fmt(l.price) })),
+        h('button', { class: 'icon-btn', 'aria-label': 'Səbətdən çıxar', on: { click: () => { toggleCart(l.id); showCart(); } } }, icon('trash'))
+      ));
+    });
+    body.push(h('div', { class: 'total' }, h('span', { text: 'Cəmi' }), h('span', { text: fmt(items.reduce((s, l) => s + Number(l.price || 0), 0)) })));
+    body.push(orderChoices(orderMessage(items)));
+  }
+  openSheet('Səbət', body);
+  current = { kind: 'cart' };
+}
+
+function showProfile() {
+  const name = h('input', { type: 'text', id: 'p-name', maxlength: '40', value: profile.name || '', autocomplete: 'name' });
+  const phone = h('input', { type: 'tel', id: 'p-phone', maxlength: '20', value: profile.phone || '', autocomplete: 'tel', placeholder: '+994 50 000 00 00' });
+  const f = h('form', { class: 'sheet-body', style: 'padding:0', on: { submit: (e) => {
+    e.preventDefault(); profile = { name: name.value.trim(), phone: phone.value.trim() }; saveProfile(); renderTop(); toast('Profil yadda saxlanıldı'); closeAll();
+  } } },
+    h('label', { class: 'field', for: 'p-name' }, h('span', { text: 'Ad' }), name),
+    h('label', { class: 'field', for: 'p-phone' }, h('span', { text: 'Nömrə' }), phone),
+    h('p', { class: 'note', text: 'Nömrə təsdiqlənmir. Sifariş mətninə avtomatik əlavə olunur.' }),
+    h('button', { class: 'btn primary', type: 'submit', text: 'Yadda saxla' })
+  );
+  openSheet('Profil', f);
+}
+
+/* ---- admin ---- */
+function showAdmin() {
+  if (!auth) { openSheet('Admin paneli', h('p', { class: 'muted', text: 'Firebase qurulmayıb.' })); return; }
+  if (isAdmin()) return showAdminPanel();
+  const email = h('input', { type: 'text', id: 'a-email', autocomplete: 'username', inputmode: 'email', autocapitalize: 'none' });
+  const pw = h('input', { type: 'password', id: 'a-pw', autocomplete: 'current-password' });
+  const err = h('p', { class: 'note', style: 'color:var(--bad)' });
+  const btn = h('button', { class: 'btn primary', type: 'submit', text: 'Daxil ol' });
+  const f = h('form', { class: 'sheet-body', style: 'padding:0', on: { submit: async (e) => {
+    e.preventDefault(); err.textContent = ''; btn.disabled = true;
+    try { await signInWithEmailAndPassword(auth, email.value.trim(), pw.value); }
+    catch (x) { err.textContent = 'E-poçt və ya şifrə yanlışdır.'; btn.disabled = false; }
+  } } },
+    h('p', { class: 'note', text: 'Elan əlavə etmək üçün admin hesabı ilə daxil olun.' }),
+    h('label', { class: 'field', for: 'a-email' }, h('span', { text: 'E-poçt' }), email),
+    h('label', { class: 'field', for: 'a-pw' }, h('span', { text: 'Şifrə' }), pw),
+    err, btn
+  );
+  openSheet('Admin paneli', f);
+}
+function adminRow(l) {
+  const m = (l.media || [])[0];
+  let armed = false;
+  const del = h('button', { class: 'btn ghost', on: { click: async () => {
+    if (!armed) { armed = true; del.className = 'btn danger'; del.textContent = 'Əminsən? Sil'; return; }
+    del.disabled = true;
+    try { await deleteDoc(doc(db, 'listings', l.id)); toast('Elan silindi'); showAdminPanel(); }
+    catch (e) { toast('Silinmədi. Yenidən cəhd edin.', 'bad'); del.disabled = false; }
+  } } }, 'Sil');
+  const soldBtn = h('button', { class: 'btn ghost', text: l.sold ? 'Satılmadı et' : 'Satıldı', on: { click: async () => {
+    soldBtn.disabled = true;
+    try { await updateDoc(doc(db, 'listings', l.id), { sold: !l.sold }); showAdminPanel(); } catch (e) { toast('Yenilənmədi.', 'bad'); soldBtn.disabled = false; }
+  } } });
+  return h('div', { class: 'arow' },
+    h('div', { class: 'mt' }, m ? mediaEl(m, true, l.title) : icon('gamepad')),
+    h('div', { class: 'meta' }, h('b', { text: l.title }), h('span', { class: 'muted', text: fmt(l.price) + ' · ' + (l.cat || 'Digər') + (l.sold ? ' · satılıb' : '') })),
+    h('div', { class: 'acts' }, h('button', { class: 'btn ghost', text: 'Düzəlt', on: { click: () => showAdminForm(l) } }), soldBtn, del)
+  );
+}
+function showAdminPanel() {
+  openSheet('Admin paneli', [
+    h('button', { class: 'btn primary', on: { click: () => showAdminForm(null) } }, icon('plus'), 'Yeni elan'),
+    h('div', { class: 'alist' }, listings.length ? listings.map(adminRow) : h('p', { class: 'note', text: 'Hələ elan yoxdur.' })),
+    h('button', { class: 'btn ghost', on: { click: async () => { await signOut(auth); closeAll(); toast('Çıxış edildi'); } } }, 'Çıxış')
+  ]);
+}
+async function toJpeg(file) {
+  if (file.type === 'image/gif') return file;
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const s = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const b = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.85));
+    return b || file;
+  } catch (e) { return file; } finally { URL.revokeObjectURL(url); }
+}
+async function uploadFile(file) {
+  const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', CLOUD_PRESET);
+  const r = await fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload', { method: 'POST', body: fd });
+  if (!r.ok) throw new Error('Fayl yüklənmədi. Cloudinary ayarlarını yoxlayın.');
+  const j = await r.json();
+  return { url: j.secure_url, type: j.resource_type === 'video' ? 'video' : 'image' };
+}
+function showAdminForm(existing) {
+  const keep = existing ? (existing.media || []).slice() : [];
+  const pending = [];
+  const title = h('input', { type: 'text', id: 'f-title', maxlength: '80', required: true, value: existing ? existing.title : '', placeholder: 'Məs: PUBG hesab, 80 level, Conqueror' });
+  const price = h('input', { type: 'number', id: 'f-price', min: '0', step: '0.01', inputmode: 'decimal', required: true, value: existing ? existing.price : '' });
+  const cat = h('select', { id: 'f-cat' }, CATS.map((c) => h('option', { value: c, text: c, selected: existing ? existing.cat === c : false })));
+  const desc = h('textarea', { id: 'f-desc', rows: '5', maxlength: '2000', placeholder: 'Elanın açıqlaması' });
+  desc.value = existing ? existing.desc || '' : '';
+  const sold = h('input', { type: 'checkbox', id: 'f-sold' }); sold.checked = !!(existing && existing.sold);
+  const box = h('div', { class: 'mediabox' });
+  const renderMedia = () => {
+    box.replaceChildren();
+    keep.forEach((m, i) => box.append(h('div', { class: 'mchip' },
+      h('div', { class: 'mt' }, mediaEl(m, true, '')), h('span', { class: 'nm', text: m.type === 'video' ? 'Video' : 'Şəkil' }),
+      h('button', { type: 'button', 'aria-label': 'Sil', on: { click: () => { keep.splice(i, 1); renderMedia(); } } }, icon('close')))));
+    pending.forEach((f, i) => box.append(h('div', { class: 'mchip' },
+      h('div', { class: 'mt' }, f.type.startsWith('video/') ? icon('play') : icon('gamepad')), h('span', { class: 'nm', text: f.name }),
+      h('button', { type: 'button', 'aria-label': 'Sil', on: { click: () => { pending.splice(i, 1); renderMedia(); } } }, icon('close')))));
+  };
+  renderMedia();
+  const file = h('input', { type: 'file', id: 'f-files', multiple: true, accept: 'image/*,video/*', on: { change: () => {
+    for (const f of Array.from(file.files)) {
+      if (keep.length + pending.length >= MAX_MEDIA) { toast('Ən çox ' + MAX_MEDIA + ' fayl əlavə etmək olar.', 'bad'); break; }
+      const vid = f.type.startsWith('video/'), img = f.type.startsWith('image/');
+      if (!vid && !img) { toast('Yalnız şəkil və video əlavə olunur.', 'bad'); continue; }
+      if (vid && f.size > MAX_VIDEO) { toast(f.name + ' 100 MB-dan böyükdür.', 'bad'); continue; }
+      pending.push(f);
+    }
+    file.value = ''; renderMedia();
+  } } });
+  const label = existing ? 'Yadda saxla' : 'Elanı yayımla';
+  const submit = h('button', { class: 'btn primary', type: 'submit', text: label });
+  const form = h('form', { class: 'sheet-body', style: 'padding:0', on: { submit: async (e) => {
+    e.preventDefault();
+    if (!title.value.trim()) { toast('Elanın adını yazın.', 'bad'); return; }
+    submit.disabled = true;
+    try {
+      const uploaded = []; let n = 0;
+      for (const f of pending) {
+        submit.textContent = 'Yüklənir ' + (++n) + '/' + pending.length + '…';
+        const vid = f.type.startsWith('video/');
+        uploaded.push(await uploadFile(vid ? f : await toJpeg(f)));
+      }
+      const data = { title: title.value.trim(), price: Number(price.value || 0), cat: cat.value, desc: desc.value.trim(),
+        media: keep.concat(uploaded), sold: sold.checked, createdAt: existing ? existing.createdAt : Date.now(), updatedAt: Date.now() };
+      if (existing) await setDoc(doc(db, 'listings', existing.id), data);
+      else await addDoc(collection(db, 'listings'), data);
+      toast(existing ? 'Elan yeniləndi' : 'Elan yayımlandı'); showAdminPanel();
+    } catch (x) { toast((x && x.code === 'permission-denied') ? 'İcazə yoxdur. Admin hesabı ilə daxil olun.' : ((x && x.message) || 'Xəta baş verdi.'), 'bad'); submit.disabled = false; submit.textContent = label; }
+  } } },
+    h('label', { class: 'field', for: 'f-title' }, h('span', { text: 'Elanın adı' }), title),
+    h('label', { class: 'field', for: 'f-price' }, h('span', { text: 'Qiymət (₼)' }), price),
+    h('label', { class: 'field', for: 'f-cat' }, h('span', { text: 'Kateqoriya' }), cat),
+    h('label', { class: 'field', for: 'f-desc' }, h('span', { text: 'Açıqlama' }), desc),
+    h('div', { class: 'field' }, h('span', { text: 'Şəkil və video' }), box,
+      h('label', { class: 'btn ghost', for: 'f-files' }, icon('plus'), 'Fayl seç'), file,
+      h('p', { class: 'note', text: 'Şəkil və video (video ən çox 100 MB). Ən çox ' + MAX_MEDIA + ' fayl.' })),
+    existing ? h('label', { class: 'checkrow', for: 'f-sold' }, sold, 'Satılıb') : null,
+    submit,
+    h('button', { class: 'btn ghost', type: 'button', text: 'Geri', on: { click: showAdminPanel } })
+  );
+  openSheet(existing ? 'Elanı düzəlt' : 'Yeni elan', form);
+}
+
+function onSnap(snap) {
+  listings = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+  if (!firstSnap && !snap.metadata.fromCache) {
+    snap.docChanges().forEach((c) => {
+      const d = c.doc.data();
+      if (c.type === 'added' && !c.doc.metadata.hasPendingWrites && d && d.createdAt > loadedAt) toast('Yeni elan: ' + (d.title || ''));
+    });
+  }
+  firstSnap = false; status = 'ready'; live = true;
+  renderAll();
+  if (!drawer.hidden) showDrawer();
+  if (current && current.kind === 'cart' && !sheet.hidden) showCart();
+  if (current && current.kind === 'detail' && !sheet.hidden && !byId(current.id)) closeAll();
+}
+
+$('#btn-menu').append(icon('menu'));
+$('#btn-menu').addEventListener('click', showDrawer);
+$('#btn-profile').addEventListener('click', showProfile);
+$('#d-cart').addEventListener('click', showCart);
+$('#d-search').addEventListener('click', () => {
+  const bar = $('#searchbar'); bar.hidden = !bar.hidden;
+  if (!bar.hidden) $('#search').focus(); else { query_ = ''; $('#search').value = ''; renderAll(); }
+});
+$('#d-home').addEventListener('click', () => {
+  filterCat = null; query_ = ''; $('#search').value = ''; $('#searchbar').hidden = true; closeAll(); renderAll(); window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+$('#search').addEventListener('input', (e) => { query_ = e.target.value; renderGrid(); renderDock(); });
+document.querySelectorAll('[data-i]').forEach((el) => el.append(icon(el.dataset.i).firstChild));
+
+renderAll();
+if (FIREBASE_CONFIG.apiKey.startsWith('PASTE')) { status = 'noconfig'; renderAll(); }
+else {
+  const app = initializeApp(FIREBASE_CONFIG);
+  db = getFirestore(app); auth = getAuth(app);
+  onAuthStateChanged(auth, (u) => {
+    const was = isAdmin(); adminUser = u || null;
+    if (u && !was && !sheet.hidden && current === null && sheet.querySelector('#a-email')) showAdminPanel();
+  });
+  onSnapshot(query(collection(db, 'listings'), orderBy('createdAt', 'desc'), limit(300)), onSnap, () => { live = false; status = 'nodb'; renderAll(); });
+}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
